@@ -70,4 +70,14 @@ config SOC_CANAAN_K210_DTB_SOURCE
 
 endif
 
+config SOC_SOPHGO
+       bool "sophgo SoCs"
+       help
+         This enables support for sophgo SoC platform hardware.
+
+config SOC_SOPHGO_PLD
+       bool "sophgo pld SoCs"
+       help
+         This enables support for sophgo SoC platform hardware for pld.
+
 endmenu

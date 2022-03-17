@@ -161,7 +161,7 @@ config VA_BITS
 config PA_BITS
 	int
 	default 34 if 32BIT
-	default 56 if 64BIT
+	default 48 if 64BIT
 
 config PAGE_OFFSET
 	hex
@@ -309,10 +309,10 @@ config SMP
 	  If you don't know what to do here, say N.
 
 config NR_CPUS
-	int "Maximum number of CPUs (2-32)"
-	range 2 32
+	int "Maximum number of CPUs (2-128)"
+	range 2 128
 	depends on SMP
-	default "8"
+	default "64"
 
 config HOTPLUG_CPU
 	bool "Support for hot-pluggable CPUs"
