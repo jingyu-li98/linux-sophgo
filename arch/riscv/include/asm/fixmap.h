@@ -43,7 +43,11 @@ enum fixed_addresses {
 	__end_of_fixed_addresses
 };
 
+#ifdef CONFIG_SOC_SOPHGO_PLD
+#define FIXMAP_PAGE_IO		PAGE_IOREMAP
+#else
 #define FIXMAP_PAGE_IO		PAGE_KERNEL
+#endif
 
 #define __early_set_fixmap	__set_fixmap
 

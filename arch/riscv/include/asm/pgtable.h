@@ -164,6 +164,10 @@
 				| _PAGE_SHARE \
 				| _PAGE_SO)
 
+#ifdef CONFIG_SOC_SOPHGO_PLD
+#define PAGE_IOREMAP	__pgprot(_PAGE_IOREMAP)
+#endif
+
 extern pgd_t swapper_pg_dir[];
 
 /* MAP_PRIVATE permissions: xwr (copy-on-write) */
