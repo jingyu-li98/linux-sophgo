@@ -935,7 +935,7 @@
 			reg = <0x00000070 0x90000000 0x00000000 0x04000000>;
 			reg-names = "control";
 			riscv,max-priority = <7>;
-			riscv,ndev = <179>;
+			riscv,ndev = <172>;
 		};
 
 		dummy_apb: apb-clock {
@@ -963,7 +963,7 @@
 			compatible = "snps,dw-apb-uart";
 			reg = <0x00000070 0x40000000 0x00000000 0x00001000>;
 			interrupt-parent = <&intc>;
-			interrupts = <160>;
+			interrupts = <112>;
 			clock-frequency = <153600>;
 			clock-names = "baudclk";
 			reg-shift = <2>;
