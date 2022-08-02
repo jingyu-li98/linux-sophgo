@@ -14,6 +14,8 @@
 #include <linux/platform_device.h>
 #include <linux/netdevice.h>
 #include <linux/can/dev.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 #include <linux/of_platform.h>
 #include <sysdev/fsl_soc.h>
 #include <linux/clk.h>
@@ -293,10 +295,8 @@ static int mpc5xxx_can_probe(struct platform_device *ofdev)
 		return -EINVAL;
 
 	base = of_iomap(np, 0);
-	if (!base) {
-		dev_err(&ofdev->dev, "couldn't ioremap\n");
-		return err;
-	}
+	if (!base)
+		return dev_err_probe(&ofdev->dev, err, "couldn't ioremap\n");
 
 	irq = irq_of_parse_and_map(np, 0);
 	if (!irq) {

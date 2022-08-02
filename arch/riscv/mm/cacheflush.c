@@ -18,7 +18,7 @@ void flush_icache_all(void)
 {
 	local_flush_icache_all();
 
-	if (IS_ENABLED(CONFIG_RISCV_SBI) && !riscv_use_ipi_for_rfence())
+	if (IS_ENABLED(CONFIG_RISCV_SBI))
 		sbi_remote_fence_i(NULL);
 	else
 		on_each_cpu(ipi_remote_fence_i, NULL, 1);
@@ -66,12 +66,8 @@ void flush_icache_mm(struct mm_struct *mm, bool local)
 		 * with flush_icache_deferred().
 		 */
 		smp_mb();
-	} else if (IS_ENABLED(CONFIG_RISCV_SBI) &&
-		   !riscv_use_ipi_for_rfence()) {
-		cpumask_t hartid_mask;
-
-		riscv_cpuid_to_hartid_mask(&others, &hartid_mask);
-		sbi_remote_fence_i(cpumask_bits(&hartid_mask));
+	} else if (IS_ENABLED(CONFIG_RISCV_SBI)) {
+		sbi_remote_fence_i(&others);
 	} else {
 		on_each_cpu_mask(&others, ipi_remote_fence_i, NULL, 1);
 	}
@@ -90,24 +86,3 @@ void flush_icache_pte(pte_t pte)
 		flush_icache_all();
 }
 #endif /* CONFIG_MMU */
-
-#define sync_is()	asm volatile (".long 0x01b0000b")
-void dma_wbinv_range(unsigned long start, unsigned long end)
-{
-	register unsigned long i asm("a0") = start & ~(L1_CACHE_BYTES - 1);
-
-	for (; i < end; i += L1_CACHE_BYTES)
-		asm volatile (".long 0x02b5000b"); /* dcache.cipa a0 */
-
-	sync_is();
-}
-
-void dma_wb_range(unsigned long start, unsigned long end)
-{
-	register unsigned long i asm("a0") = start & ~(L1_CACHE_BYTES - 1);
-
-	for (; i < end; i += L1_CACHE_BYTES)
-		asm volatile (".long 0x0295000b"); /* dcache.cpa a0 */
-
-	sync_is();
-}

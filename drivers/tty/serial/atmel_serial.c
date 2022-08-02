@@ -8,6 +8,7 @@
  *
  *  DMA support added by Chip Coldwell.
  */
+#include <linux/circ_buf.h>
 #include <linux/tty.h>
 #include <linux/ioport.h>
 #include <linux/slab.h>
@@ -298,11 +299,9 @@ static int atmel_config_rs485(struct uart_port *port,
 	/* Resetting serial mode to RS232 (0x0) */
 	mode &= ~ATMEL_US_USMODE;
 
-	port->rs485 = *rs485conf;
-
 	if (rs485conf->flags & SER_RS485_ENABLED) {
 		dev_dbg(port->dev, "Setting UART to RS485\n");
-		if (port->rs485.flags & SER_RS485_RX_DURING_TX)
+		if (rs485conf->flags & SER_RS485_RX_DURING_TX)
 			atmel_port->tx_done_mask = ATMEL_US_TXRDY;
 		else
 			atmel_port->tx_done_mask = ATMEL_US_TXEMPTY;
@@ -2098,7 +2097,7 @@ static void atmel_serial_pm(struct uart_port *port, unsigned int state,
 	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
 
 	switch (state) {
-	case 0:
+	case UART_PM_STATE_ON:
 		/*
 		 * Enable the peripheral clock for this serial port.
 		 * This is called on uart_open() or a resume event.
@@ -2108,7 +2107,7 @@ static void atmel_serial_pm(struct uart_port *port, unsigned int state,
 		/* re-enable interrupts if we disabled some on suspend */
 		atmel_uart_writel(port, ATMEL_US_IER, atmel_port->backup_imr);
 		break;
-	case 3:
+	case UART_PM_STATE_OFF:
 		/* Back up the interrupt mask and disable all interrupts */
 		atmel_port->backup_imr = atmel_uart_readl(port, ATMEL_US_IMR);
 		atmel_uart_writel(port, ATMEL_US_IDR, -1);
@@ -2493,7 +2492,7 @@ static int atmel_init_port(struct atmel_uart_port *atmel_port,
 	port->fifosize		= 1;
 	port->dev		= &pdev->dev;
 	port->mapbase		= mpdev->resource[0].start;
-	port->irq		= mpdev->resource[1].start;
+	port->irq		= platform_get_irq(mpdev, 0);
 	port->rs485_config	= atmel_config_rs485;
 	port->iso7816_config	= atmel_config_iso7816;
 	port->membase		= NULL;
@@ -2540,7 +2539,7 @@ static int atmel_init_port(struct atmel_uart_port *atmel_port,
 }
 
 #ifdef CONFIG_SERIAL_ATMEL_CONSOLE
-static void atmel_console_putchar(struct uart_port *port, int ch)
+static void atmel_console_putchar(struct uart_port *port, unsigned char ch)
 {
 	while (!(atmel_uart_readl(port, ATMEL_US_CSR) & ATMEL_US_TXRDY))
 		cpu_relax();
@@ -2671,6 +2670,30 @@ static struct console atmel_console = {
 	.index		= -1,
 	.data		= &atmel_uart,
 };
+
+static void atmel_serial_early_write(struct console *con, const char *s,
+				     unsigned int n)
+{
+	struct earlycon_device *dev = con->data;
+
+	uart_console_write(&dev->port, s, n, atmel_console_putchar);
+}
+
+static int __init atmel_early_console_setup(struct earlycon_device *device,
+					    const char *options)
+{
+	if (!device->port.membase)
+		return -ENODEV;
+
+	device->con->write = atmel_serial_early_write;
+
+	return 0;
+}
+
+OF_EARLYCON_DECLARE(atmel_serial, "atmel,at91rm9200-usart",
+		    atmel_early_console_setup);
+OF_EARLYCON_DECLARE(atmel_serial, "atmel,at91sam9260-usart",
+		    atmel_early_console_setup);
 
 #define ATMEL_CONSOLE_DEVICE	(&atmel_console)
 

@@ -133,29 +133,13 @@ xchk_bmap_get_rmap(
 	if (info->is_shared) {
 		error = xfs_rmap_lookup_le_range(info->sc->sa.rmap_cur, agbno,
 				owner, offset, rflags, rmap, &has_rmap);
-		if (!xchk_should_check_xref(info->sc, &error,
-				&info->sc->sa.rmap_cur))
-			return false;
-		goto out;
+	} else {
+		error = xfs_rmap_lookup_le(info->sc->sa.rmap_cur, agbno,
+				owner, offset, rflags, rmap, &has_rmap);
 	}
-
-	/*
-	 * Otherwise, use the (faster) regular lookup.
-	 */
-	error = xfs_rmap_lookup_le(info->sc->sa.rmap_cur, agbno, 0, owner,
-			offset, rflags, &has_rmap);
-	if (!xchk_should_check_xref(info->sc, &error,
-			&info->sc->sa.rmap_cur))
-		return false;
-	if (!has_rmap)
-		goto out;
-
-	error = xfs_rmap_get_rec(info->sc->sa.rmap_cur, rmap, &has_rmap);
-	if (!xchk_should_check_xref(info->sc, &error,
-			&info->sc->sa.rmap_cur))
+	if (!xchk_should_check_xref(info->sc, &error, &info->sc->sa.rmap_cur))
 		return false;
 
-out:
 	if (!has_rmap)
 		xchk_fblock_xref_set_corrupt(info->sc, info->whichfork,
 			irec->br_startoff);
@@ -350,7 +334,7 @@ xchk_bmap_iextent(
 				irec->br_startoff);
 
 	/* Make sure the extent points to a valid place. */
-	if (irec->br_blockcount > MAXEXTLEN)
+	if (irec->br_blockcount > XFS_MAX_BMBT_EXTLEN)
 		xchk_fblock_set_corrupt(info->sc, info->whichfork,
 				irec->br_startoff);
 	if (info->is_rt &&
@@ -402,7 +386,7 @@ xchk_bmapbt_rec(
 	 * the root since the verifiers don't do that.
 	 */
 	if (xfs_has_crc(bs->cur->bc_mp) &&
-	    bs->cur->bc_ptrs[0] == 1) {
+	    bs->cur->bc_levels[0].ptr == 1) {
 		for (i = 0; i < bs->cur->bc_nlevels - 1; i++) {
 			block = xfs_btree_get_block(bs->cur, i, &bp);
 			owner = be64_to_cpu(block->bb_u.l.bb_owner);

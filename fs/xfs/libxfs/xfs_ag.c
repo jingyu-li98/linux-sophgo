@@ -173,7 +173,6 @@ __xfs_free_perag(
 	struct xfs_perag *pag = container_of(head, struct xfs_perag, rcu_head);
 
 	ASSERT(!delayed_work_pending(&pag->pag_blockgc_work));
-	ASSERT(atomic_read(&pag->pag_ref) == 0);
 	kmem_free(pag);
 }
 
@@ -192,7 +191,7 @@ xfs_free_perag(
 		pag = radix_tree_delete(&mp->m_perag_tree, agno);
 		spin_unlock(&mp->m_perag_lock);
 		ASSERT(pag);
-		ASSERT(atomic_read(&pag->pag_ref) == 0);
+		XFS_IS_CORRUPT(pag->pag_mount, atomic_read(&pag->pag_ref) != 0);
 
 		cancel_delayed_work_sync(&pag->pag_blockgc_work);
 		xfs_iunlink_destroy(pag);
@@ -248,6 +247,7 @@ xfs_initialize_perag(
 		spin_unlock(&mp->m_perag_lock);
 		radix_tree_preload_end();
 
+#ifdef __KERNEL__
 		/* Place kernel structure only init below this point. */
 		spin_lock_init(&pag->pag_ici_lock);
 		spin_lock_init(&pag->pagb_lock);
@@ -257,6 +257,7 @@ xfs_initialize_perag(
 		init_waitqueue_head(&pag->pagb_wait);
 		pag->pagb_count = 0;
 		pag->pagb_tree = RB_ROOT;
+#endif /* __KERNEL__ */
 
 		error = xfs_buf_hash_init(pag);
 		if (error)
@@ -850,7 +851,7 @@ xfs_ag_shrink_space(
 		if (err2 != -ENOSPC)
 			goto resv_err;
 
-		__xfs_bmap_add_free(*tpp, args.fsbno, delta, NULL, true);
+		__xfs_free_extent_later(*tpp, args.fsbno, delta, NULL, true);
 
 		/*
 		 * Roll the transaction before trying to re-init the per-ag

@@ -5,6 +5,7 @@
  * Copyright (c) 2001-2015 Anton Altaparmakov and Tuxera Inc.
  */
 
+#include <linux/blkdev.h>
 #include <linux/backing-dev.h>
 #include <linux/buffer_head.h>
 #include <linux/gfp.h>
@@ -250,14 +251,14 @@ do_non_resident_extend:
 		 *
 		 * TODO: For sparse pages could optimize this workload by using
 		 * the FsMisc / MiscFs page bit as a "PageIsSparse" bit.  This
-		 * would be set in readpage for sparse pages and here we would
+		 * would be set in read_folio for sparse pages and here we would
 		 * not need to mark dirty any pages which have this bit set.
 		 * The only caveat is that we have to clear the bit everywhere
 		 * where we allocate any clusters that lie in the page or that
 		 * contain the page.
 		 *
 		 * TODO: An even greater optimization would be for us to only
-		 * call readpage() on pages which are not in sparse regions as
+		 * call read_folio() on pages which are not in sparse regions as
 		 * determined from the runlist.  This would greatly reduce the
 		 * number of pages we read and make dirty in the case of sparse
 		 * files.
@@ -1771,11 +1772,11 @@ static ssize_t ntfs_perform_write(struct file *file, struct iov_iter *i,
 	last_vcn = -1;
 	do {
 		VCN vcn;
-		pgoff_t idx, start_idx;
+		pgoff_t start_idx;
 		unsigned ofs, do_pages, u;
 		size_t copied;
 
-		start_idx = idx = pos >> PAGE_SHIFT;
+		start_idx = pos >> PAGE_SHIFT;
 		ofs = pos & ~PAGE_MASK;
 		bytes = PAGE_SIZE - ofs;
 		do_pages = 1;
@@ -1829,7 +1830,7 @@ again:
 		 * pages being swapped out between us bringing them into memory
 		 * and doing the actual copying.
 		 */
-		if (unlikely(iov_iter_fault_in_readable(i, bytes))) {
+		if (unlikely(fault_in_iov_iter_readable(i, bytes))) {
 			status = -EFAULT;
 			break;
 		}

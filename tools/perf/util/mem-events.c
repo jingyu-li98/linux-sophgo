@@ -301,12 +301,49 @@ static const char * const mem_lvlnum[] = {
 	[PERF_MEM_LVLNUM_NA] = "N/A",
 };
 
+static const char * const mem_hops[] = {
+	"N/A",
+	/*
+	 * While printing, 'Remote' will be added to represent
+	 * 'Remote core, same node' accesses as remote field need
+	 * to be set with mem_hops field.
+	 */
+	"core, same node",
+	"node, same socket",
+	"socket, same board",
+	"board",
+};
+
+static int perf_mem__op_scnprintf(char *out, size_t sz, struct mem_info *mem_info)
+{
+	u64 op = PERF_MEM_LOCK_NA;
+	int l;
+
+	if (mem_info)
+		op = mem_info->data_src.mem_op;
+
+	if (op & PERF_MEM_OP_NA)
+		l = scnprintf(out, sz, "N/A");
+	else if (op & PERF_MEM_OP_LOAD)
+		l = scnprintf(out, sz, "LOAD");
+	else if (op & PERF_MEM_OP_STORE)
+		l = scnprintf(out, sz, "STORE");
+	else if (op & PERF_MEM_OP_PFETCH)
+		l = scnprintf(out, sz, "PFETCH");
+	else if (op & PERF_MEM_OP_EXEC)
+		l = scnprintf(out, sz, "EXEC");
+	else
+		l = scnprintf(out, sz, "No");
+
+	return l;
+}
+
 int perf_mem__lvl_scnprintf(char *out, size_t sz, struct mem_info *mem_info)
 {
 	size_t i, l = 0;
 	u64 m =  PERF_MEM_LVL_NA;
 	u64 hit, miss;
-	int printed;
+	int printed = 0;
 
 	if (mem_info)
 		m  = mem_info->data_src.mem_lvl;
@@ -320,21 +357,27 @@ int perf_mem__lvl_scnprintf(char *out, size_t sz, struct mem_info *mem_info)
 	/* already taken care of */
 	m &= ~(PERF_MEM_LVL_HIT|PERF_MEM_LVL_MISS);
 
-
 	if (mem_info && mem_info->data_src.mem_remote) {
 		strcat(out, "Remote ");
 		l += 7;
 	}
 
-	printed = 0;
-	for (i = 0; m && i < ARRAY_SIZE(mem_lvl); i++, m >>= 1) {
-		if (!(m & 0x1))
-			continue;
-		if (printed++) {
-			strcat(out, " or ");
-			l += 4;
+	/*
+	 * Incase mem_hops field is set, we can skip printing data source via
+	 * PERF_MEM_LVL namespace.
+	 */
+	if (mem_info && mem_info->data_src.mem_hops) {
+		l += scnprintf(out + l, sz - l, "%s ", mem_hops[mem_info->data_src.mem_hops]);
+	} else {
+		for (i = 0; m && i < ARRAY_SIZE(mem_lvl); i++, m >>= 1) {
+			if (!(m & 0x1))
+				continue;
+			if (printed++) {
+				strcat(out, " or ");
+				l += 4;
+			}
+			l += scnprintf(out + l, sz - l, mem_lvl[i]);
 		}
-		l += scnprintf(out + l, sz - l, mem_lvl[i]);
 	}
 
 	if (mem_info && mem_info->data_src.mem_lvl_num) {
@@ -447,7 +490,10 @@ int perf_script__meminfo_scnprintf(char *out, size_t sz, struct mem_info *mem_in
 {
 	int i = 0;
 
-	i += perf_mem__lvl_scnprintf(out, sz, mem_info);
+	i += scnprintf(out, sz, "|OP ");
+	i += perf_mem__op_scnprintf(out + i, sz - i, mem_info);
+	i += scnprintf(out + i, sz - i, "|LVL ");
+	i += perf_mem__lvl_scnprintf(out + i, sz, mem_info);
 	i += scnprintf(out + i, sz - i, "|SNP ");
 	i += perf_mem__snp_scnprintf(out + i, sz - i, mem_info);
 	i += scnprintf(out + i, sz - i, "|TLB ");
@@ -472,8 +518,12 @@ int c2c_decode_stats(struct c2c_stats *stats, struct mem_info *mi)
 	/*
 	 * Skylake might report unknown remote level via this
 	 * bit, consider it when evaluating remote HITMs.
+	 *
+	 * Incase of power, remote field can also be used to denote cache
+	 * accesses from the another core of same node. Hence, setting
+	 * mrem only when HOPS is zero along with set remote field.
 	 */
-	bool mrem  = data_src->mem_remote;
+	bool mrem  = (data_src->mem_remote && !data_src->mem_hops);
 	int err = 0;
 
 #define HITM_INC(__f)		\
@@ -559,6 +609,8 @@ do {				\
 		}
 		if (lvl & P(LVL, MISS))
 			if (lvl & P(LVL, L1)) stats->st_l1miss++;
+		if (lvl & P(LVL, NA))
+			stats->st_na++;
 	} else {
 		/* unparsable data_src? */
 		stats->noparse++;
@@ -585,6 +637,7 @@ void c2c_add_stats(struct c2c_stats *stats, struct c2c_stats *add)
 	stats->st_noadrs	+= add->st_noadrs;
 	stats->st_l1hit		+= add->st_l1hit;
 	stats->st_l1miss	+= add->st_l1miss;
+	stats->st_na		+= add->st_na;
 	stats->load		+= add->load;
 	stats->ld_excl		+= add->ld_excl;
 	stats->ld_shared	+= add->ld_shared;

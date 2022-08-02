@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/filter.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <net/gre.h>
@@ -50,8 +51,8 @@ static unsigned int efx_monitor_interval = 1 * HZ;
 /* Default stats update time */
 #define STATS_PERIOD_MS_DEFAULT 1000
 
-const unsigned int efx_reset_type_max = RESET_TYPE_MAX;
-const char *const efx_reset_type_names[] = {
+static const unsigned int efx_reset_type_max = RESET_TYPE_MAX;
+static const char *const efx_reset_type_names[] = {
 	[RESET_TYPE_INVISIBLE]          = "INVISIBLE",
 	[RESET_TYPE_ALL]                = "ALL",
 	[RESET_TYPE_RECOVER_OR_ALL]     = "RECOVER_OR_ALL",
@@ -181,11 +182,11 @@ int efx_set_mac_address(struct net_device *net_dev, void *data)
 
 	/* save old address */
 	ether_addr_copy(old_addr, net_dev->dev_addr);
-	ether_addr_copy(net_dev->dev_addr, new_addr);
+	eth_hw_addr_set(net_dev, new_addr);
 	if (efx->type->set_mac_address) {
 		rc = efx->type->set_mac_address(efx);
 		if (rc) {
-			ether_addr_copy(net_dev->dev_addr, old_addr);
+			eth_hw_addr_set(net_dev, old_addr);
 			return rc;
 		}
 	}

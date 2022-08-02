@@ -598,7 +598,7 @@ static int wilc_sdio_init(struct wilc *wilc, bool resume)
 	cmd.read_write = 1;
 	cmd.function = 0;
 	cmd.raw = 1;
-	cmd.address = SDIO_FBR_BASE(func->num);
+	cmd.address = SDIO_FBR_BASE(1);
 	cmd.data = SDIO_FBR_ENABLE_CSA;
 	ret = wilc_sdio_cmd52(wilc, &cmd);
 	if (ret) {
@@ -980,6 +980,7 @@ static const struct wilc_hif_func wilc_hif_sdio = {
 	.hif_sync_ext = wilc_sdio_sync_ext,
 	.enable_interrupt = wilc_sdio_enable_interrupt,
 	.disable_interrupt = wilc_sdio_disable_interrupt,
+	.hif_reset = wilc_sdio_reset,
 };
 
 static int wilc_sdio_resume(struct device *dev)

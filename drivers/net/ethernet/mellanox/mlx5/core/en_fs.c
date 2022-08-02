@@ -71,12 +71,12 @@ struct mlx5e_l2_hash_node {
 	bool   mpfs;
 };
 
-static inline int mlx5e_hash_l2(u8 *addr)
+static inline int mlx5e_hash_l2(const u8 *addr)
 {
 	return addr[5];
 }
 
-static void mlx5e_add_l2_to_hash(struct hlist_head *hash, u8 *addr)
+static void mlx5e_add_l2_to_hash(struct hlist_head *hash, const u8 *addr)
 {
 	struct mlx5e_l2_hash_node *hn;
 	int ix = mlx5e_hash_l2(addr);
@@ -155,7 +155,7 @@ static int mlx5e_vport_context_update_vlans(struct mlx5e_priv *priv)
 		list_size = max_list_size;
 	}
 
-	vlans = kcalloc(list_size, sizeof(*vlans), GFP_KERNEL);
+	vlans = kvcalloc(list_size, sizeof(*vlans), GFP_KERNEL);
 	if (!vlans)
 		return -ENOMEM;
 
@@ -171,7 +171,7 @@ static int mlx5e_vport_context_update_vlans(struct mlx5e_priv *priv)
 		netdev_err(ndev, "Failed to modify vport vlans list err(%d)\n",
 			   err);
 
-	kfree(vlans);
+	kvfree(vlans);
 	return err;
 }
 

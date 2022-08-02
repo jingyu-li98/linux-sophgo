@@ -20,7 +20,6 @@
 #include <linux/of_irq.h>
 #include <linux/smp.h>
 #include <linux/timex.h>
-#include <asm/ipi-mux.h>
 
 #ifndef CONFIG_RISCV_M_MODE
 #include <asm/clint.h>
@@ -54,6 +53,11 @@ static void clint_clear_ipi(void)
 {
 	writel(0, clint_ipi_base + cpuid_to_hartid_map(smp_processor_id()));
 }
+
+static struct riscv_ipi_ops clint_ipi_ops = {
+	.ipi_inject = clint_send_ipi,
+	.ipi_clear = clint_clear_ipi,
+};
 
 #ifdef CONFIG_64BIT
 #define clint_get_cycles()	readq_relaxed(clint_timer_val)
@@ -224,7 +228,7 @@ static int __init clint_timer_init_dt(struct device_node *np)
 		goto fail_free_irq;
 	}
 
-	riscv_ipi_mux_create(true, true, clint_clear_ipi, clint_send_ipi);
+	riscv_set_ipi_ops(&clint_ipi_ops);
 	clint_clear_ipi();
 
 	return 0;

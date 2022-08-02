@@ -51,6 +51,7 @@ FEATURE_TESTS_BASIC :=                  \
         libslang                        \
         libslang-include-subdir         \
         libtraceevent                   \
+        libtracefs                      \
         libcrypto                       \
         libunwind                       \
         pthread-attr-setaffinity-np     \
@@ -97,6 +98,11 @@ FEATURE_TESTS_EXTRA :=                  \
          llvm-version                   \
          clang                          \
          libbpf                         \
+         libbpf-btf__load_from_kernel_by_id \
+         libbpf-bpf_prog_load           \
+         libbpf-bpf_object__next_program \
+         libbpf-bpf_object__next_map    \
+         libbpf-bpf_create_map		\
          libpfm4                        \
          libdebuginfod			\
          clang-bpf-co-re

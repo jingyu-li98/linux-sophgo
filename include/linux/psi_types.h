@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _LINUX_PSI_TYPES_H
 #define _LINUX_PSI_TYPES_H
 
@@ -141,8 +142,8 @@ struct psi_trigger {
 	 */
 	u64 last_event_time;
 
-	/* Refcounting to prevent premature destruction */
-	struct kref refcount;
+	/* Deferred event(s) from previous ratelimit window */
+	bool pending_event;
 };
 
 struct psi_group {

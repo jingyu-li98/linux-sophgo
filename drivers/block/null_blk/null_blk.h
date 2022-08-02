@@ -16,13 +16,15 @@
 #include <linux/mutex.h>
 
 struct nullb_cmd {
-	struct request *rq;
-	struct bio *bio;
+	union {
+		struct request *rq;
+		struct bio *bio;
+	};
 	unsigned int tag;
 	blk_status_t error;
+	bool fake_timeout;
 	struct nullb_queue *nq;
 	struct hrtimer timer;
-	bool fake_timeout;
 };
 
 struct nullb_queue {
@@ -31,6 +33,9 @@ struct nullb_queue {
 	unsigned int queue_depth;
 	struct nullb_device *dev;
 	unsigned int requeue_selection;
+
+	struct list_head poll_list;
+	spinlock_t poll_lock;
 
 	struct nullb_cmd *cmds;
 };
@@ -53,6 +58,13 @@ struct nullb_zone {
 	sector_t wp;
 	unsigned int len;
 	unsigned int capacity;
+};
+
+/* Queue modes */
+enum {
+	NULL_Q_BIO	= 0,
+	NULL_Q_RQ	= 1,
+	NULL_Q_MQ	= 2,
 };
 
 struct nullb_device {
@@ -83,6 +95,9 @@ struct nullb_device {
 	unsigned int zone_max_open; /* max number of open zones */
 	unsigned int zone_max_active; /* max number of active zones */
 	unsigned int submit_queues; /* number of submission queues */
+	unsigned int prev_submit_queues; /* number of submission queues before change */
+	unsigned int poll_queues; /* number of IOPOLL submission queues */
+	unsigned int prev_poll_queues; /* number of IOPOLL submission queues before change */
 	unsigned int home_node; /* home node for the device */
 	unsigned int queue_mode; /* block interface */
 	unsigned int blocksize; /* block size */

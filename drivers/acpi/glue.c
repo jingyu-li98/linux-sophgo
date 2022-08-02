@@ -17,6 +17,8 @@
 #include <linux/rwsem.h>
 #include <linux/acpi.h>
 #include <linux/dma-mapping.h>
+#include <linux/pci.h>
+#include <linux/pci-acpi.h>
 #include <linux/platform_device.h>
 
 #include "internal.h"
@@ -77,17 +79,17 @@ static struct acpi_bus_type *acpi_get_bus_type(struct device *dev)
 
 static int find_child_checks(struct acpi_device *adev, bool check_children)
 {
-	bool sta_present = true;
 	unsigned long long sta;
 	acpi_status status;
 
-	status = acpi_evaluate_integer(adev->handle, "_STA", NULL, &sta);
-	if (status == AE_NOT_FOUND)
-		sta_present = false;
-	else if (ACPI_FAILURE(status) || !(sta & ACPI_STA_DEVICE_ENABLED))
+	if (check_children && list_empty(&adev->children))
 		return -ENODEV;
 
-	if (check_children && list_empty(&adev->children))
+	status = acpi_evaluate_integer(adev->handle, "_STA", NULL, &sta);
+	if (status == AE_NOT_FOUND)
+		return FIND_CHILD_MIN_SCORE;
+
+	if (ACPI_FAILURE(status) || !(sta & ACPI_STA_DEVICE_ENABLED))
 		return -ENODEV;
 
 	/*
@@ -97,8 +99,10 @@ static int find_child_checks(struct acpi_device *adev, bool check_children)
 	 * matched going forward.  [This means a second spec violation in a row,
 	 * so whatever we do here is best effort anyway.]
 	 */
-	return sta_present && !adev->pnp.type.platform_id ?
-			FIND_CHILD_MAX_SCORE : FIND_CHILD_MIN_SCORE;
+	if (adev->pnp.type.platform_id)
+		return FIND_CHILD_MIN_SCORE;
+
+	return FIND_CHILD_MAX_SCORE;
 }
 
 struct acpi_device *acpi_find_child_device(struct acpi_device *parent,
@@ -111,13 +115,10 @@ struct acpi_device *acpi_find_child_device(struct acpi_device *parent,
 		return NULL;
 
 	list_for_each_entry(adev, &parent->children, node) {
-		unsigned long long addr;
-		acpi_status status;
+		acpi_bus_address addr = acpi_device_adr(adev);
 		int score;
 
-		status = acpi_evaluate_integer(adev->handle, METHOD_NAME__ADR,
-					       NULL, &addr);
-		if (ACPI_FAILURE(status) || addr != address)
+		if (!adev->pnp.type.bus_address || addr != address)
 			continue;
 
 		if (!ret) {
@@ -287,12 +288,13 @@ EXPORT_SYMBOL_GPL(acpi_unbind_one);
 
 void acpi_device_notify(struct device *dev)
 {
-	struct acpi_bus_type *type = acpi_get_bus_type(dev);
 	struct acpi_device *adev;
 	int ret;
 
 	ret = acpi_bind_one(dev, NULL);
 	if (ret) {
+		struct acpi_bus_type *type = acpi_get_bus_type(dev);
+
 		if (!type)
 			goto err;
 
@@ -304,17 +306,26 @@ void acpi_device_notify(struct device *dev)
 		ret = acpi_bind_one(dev, adev);
 		if (ret)
 			goto err;
+
+		if (type->setup) {
+			type->setup(dev);
+			goto done;
+		}
+	} else {
+		adev = ACPI_COMPANION(dev);
+
+		if (dev_is_pci(dev)) {
+			pci_acpi_setup(dev, adev);
+			goto done;
+		} else if (dev_is_platform(dev)) {
+			acpi_configure_pmsi_domain(dev);
+		}
 	}
-	adev = ACPI_COMPANION(dev);
 
-	if (dev_is_platform(dev))
-		acpi_configure_pmsi_domain(dev);
-
-	if (type && type->setup)
-		type->setup(dev);
-	else if (adev->handler && adev->handler->bind)
+	if (adev->handler && adev->handler->bind)
 		adev->handler->bind(dev);
 
+done:
 	acpi_handle_debug(ACPI_HANDLE(dev), "Bound to device %s\n",
 			  dev_name(dev));
 
@@ -327,14 +338,12 @@ err:
 void acpi_device_notify_remove(struct device *dev)
 {
 	struct acpi_device *adev = ACPI_COMPANION(dev);
-	struct acpi_bus_type *type;
 
 	if (!adev)
 		return;
 
-	type = acpi_get_bus_type(dev);
-	if (type && type->cleanup)
-		type->cleanup(dev);
+	if (dev_is_pci(dev))
+		pci_acpi_cleanup(dev, adev);
 	else if (adev->handler && adev->handler->unbind)
 		adev->handler->unbind(dev);
 
