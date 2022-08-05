@@ -127,10 +127,19 @@ static inline u64 riscv_page_io(void)
 #define _PAGE_MTMASK		riscv_page_mtmask()
 
 /* Set of bits to preserve across pte_modify() */
+#ifdef CONFIG_THEAD_PATCH_NONCOHERENCY_MEMORY_MODEL
+#define _PAGE_CHG_MASK  (~(unsigned long)(_PAGE_PRESENT | _PAGE_READ |	\
+					  _PAGE_WRITE | _PAGE_EXEC |	\
+					  _PAGE_USER | _PAGE_GLOBAL |	\
+					  _PAGE_SEC | _PAGE_SHARE |     \
+					  _PAGE_BUF | _PAGE_CACHE |     \
+					  _PAGE_SO))
+#else
 #define _PAGE_CHG_MASK  (~(unsigned long)(_PAGE_PRESENT | _PAGE_READ |	\
 					  _PAGE_WRITE | _PAGE_EXEC |	\
 					  _PAGE_USER | _PAGE_GLOBAL |	\
 					  _PAGE_MTMASK))
+#endif
 
 static inline int pud_present(pud_t pud)
 {
@@ -180,7 +189,11 @@ static inline unsigned long _pud_pfn(pud_t pud)
 
 static inline pmd_t *pud_pgtable(pud_t pud)
 {
+#ifdef CONFIG_THEAD_PATCH_NONCOHERENCY_MEMORY_MODEL
+	return (pmd_t *)pfn_to_virt(__page_val_to_pfn(pud_val(pud) & _PAGE_CHG_MASK));
+#else
 	return (pmd_t *)pfn_to_virt(__page_val_to_pfn(pud_val(pud)));
+#endif
 }
 
 static inline struct page *pud_page(pud_t pud)
