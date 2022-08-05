@@ -80,4 +80,18 @@ config SOC_CANAAN_K210_DTB_SOURCE
 
 endif
 
+config SOC_SOPHGO
+       bool "Sophgo SoCs"
+       help
+         This enables support for Sophgo SoC platform hardware.
+
+if SOC_SOPHGO
+
+config SOC_SOPHGO_SG2042
+       bool "Sophgo SG2042 SoC"
+       help
+         This enables support for Sophgo SG2042 SoC platform hardware.
+
+endif
+
 endmenu
