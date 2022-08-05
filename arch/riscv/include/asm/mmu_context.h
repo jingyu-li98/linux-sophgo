@@ -12,6 +12,7 @@
 
 #include <linux/mm.h>
 #include <linux/sched.h>
+#include <asm/tlbflush.h>
 
 void switch_mm(struct mm_struct *prev, struct mm_struct *next,
 	struct task_struct *task);
@@ -21,6 +22,14 @@ static inline void activate_mm(struct mm_struct *prev,
 			       struct mm_struct *next)
 {
 	switch_mm(prev, next, NULL);
+}
+
+#define deactivate_mm deactivate_mm
+static inline void deactivate_mm(struct task_struct *tsk,
+				struct mm_struct *mm)
+{
+	if (mm != NULL)
+		flush_tlb_mm(mm);
 }
 
 #define init_new_context init_new_context
