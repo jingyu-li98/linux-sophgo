@@ -26,14 +26,6 @@ const struct kexec_file_ops * const kexec_file_loaders[] = {
 	NULL
 };
 
-int arch_kimage_file_post_load_cleanup(struct kimage *image)
-{
-	kvfree(image->arch.fdt_virt_addr);
-	image->arch.fdt_virt_addr = NULL;
-
-	return kexec_image_post_load_cleanup_default(image);
-}
-
 static int prepare_elf_headers(void **addr, unsigned long *sz)
 {
 	struct crash_mem *cmem;
@@ -170,7 +162,6 @@ int load_other_segments(struct kimage *image,
 	ret = kexec_add_buffer(&kbuf);
 	if (ret)
 		goto out_err;
-	image->arch.fdt_virt_addr = dtb;
 	image->arch.fdt_addr = kbuf.mem;
 
 	pr_debug("Loaded dtb at 0x%lx bufsz=0x%lx memsz=0x%lx\n",

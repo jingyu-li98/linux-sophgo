@@ -40,7 +40,6 @@ crash_setup_regs(struct pt_regs *newregs,
 
 struct kimage_arch {
 	unsigned long fdt_addr;
-	void *fdt_virt_addr;
 };
 
 extern const unsigned char riscv_kexec_relocate[];
@@ -66,7 +65,6 @@ int arch_kexec_apply_relocations_add(struct purgatory_info *pi,
 #define arch_kexec_apply_relocations_add arch_kexec_apply_relocations_add
 
 struct kimage;
-extern int arch_kimage_file_post_load_cleanup(struct kimage *image);
 extern int load_other_segments(struct kimage *image,
 		unsigned long kernel_load_addr, unsigned long kernel_size,
 		char *initrd, unsigned long initrd_len,
