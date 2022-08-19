@@ -39,6 +39,7 @@ void arch_sync_dma_for_device(phys_addr_t paddr, size_t size,
 		cache_op(paddr, size, dma_wbinv_range);
 		break;
 	default:
+		pr_err("%s: dir[%d] illegal!\n", __func__, (int)dir);
 	}
 }
 
@@ -53,6 +54,7 @@ void arch_sync_dma_for_cpu(phys_addr_t paddr, size_t size,
 		cache_op(paddr, size, dma_wbinv_range);
 		break;
 	default:
+		pr_err("%s: dir[%d] illegal!\n", __func__, (int)dir);
 	}
 }
 
