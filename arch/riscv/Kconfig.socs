@@ -87,13 +87,13 @@ config SOC_SOPHGO
 
 if SOC_SOPHGO
 
-config SOC_SOPHGO_SG2042
-	bool "Sophgo SG2042 SoC"
+config SOC_SOPHGO_MANGO
+	bool "Sophgo mango SoC"
 	depends on SOC_SOPHGO
 	select SIFIVE_PLIC
 	select ERRATA_THEAD
 	help
-	  This enables support for Sophgo SG2042 SoC platform hardware.
+	  This enables support for Sophgo mango SoC platform hardware.
 
 config  THEAD_PATCH_NONCOHERENCY_MEMORY_MODEL
 	bool "T-Head non-coherency memory mode"
