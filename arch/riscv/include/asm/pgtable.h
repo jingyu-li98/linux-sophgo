@@ -165,15 +165,14 @@ extern struct pt_alloc_ops pt_ops __initdata;
 /* Page protection bits */
 #ifdef CONFIG_THEAD_PATCH_NONCOHERENCY_MEMORY_MODEL
 #define _PAGE_BASE	(_PAGE_PRESENT | _PAGE_ACCESSED | _PAGE_USER | \
-			 _PAGE_SHARE | _PAGE_CACHE | _PAGE_BUF)
+			_PAGE_PMA_THEAD)
 #else
 #define _PAGE_BASE	(_PAGE_PRESENT | _PAGE_ACCESSED | _PAGE_USER)
 #endif
 
 #ifdef CONFIG_THEAD_PATCH_NONCOHERENCY_MEMORY_MODEL
 #define PAGE_NONE		__pgprot(_PAGE_PROT_NONE | _PAGE_READ | \
-					 _PAGE_CACHE | _PAGE_BUF | \
-					 _PAGE_SHARE | _PAGE_SHARE)
+					 _PAGE_PMA_THEAD)
 #else
 #define PAGE_NONE		__pgprot(_PAGE_PROT_NONE | _PAGE_READ)
 #endif
@@ -198,9 +197,7 @@ extern struct pt_alloc_ops pt_ops __initdata;
 				| _PAGE_ACCESSED \
 				| _PAGE_DIRTY \
 				| _PAGE_GLOBAL \
-				| _PAGE_CACHE \
-				| _PAGE_SHARE \
-				| _PAGE_BUF)
+				| _PAGE_PMA_THEAD)
 #else
 #define _PAGE_KERNEL		(_PAGE_READ \
 				| _PAGE_WRITE \
@@ -218,18 +215,7 @@ extern struct pt_alloc_ops pt_ops __initdata;
 
 #define PAGE_TABLE		__pgprot(_PAGE_TABLE)
 
-#ifdef CONFIG_THEAD_PATCH_NONCOHERENCY_MEMORY_MODEL
-#define _PAGE_IOREMAP	(_PAGE_READ \
-			| _PAGE_WRITE \
-			| _PAGE_PRESENT \
-			| _PAGE_GLOBAL \
-			| _PAGE_ACCESSED \
-			| _PAGE_DIRTY \
-			| _PAGE_SHARE \
-			| _PAGE_SO)
-#else
-#define _PAGE_IOREMAP	((_PAGE_KERNEL & ~_PAGE_MTMASK) | _PAGE_IO)
-#endif
+#define _PAGE_IOREMAP		((_PAGE_KERNEL & ~_PAGE_MTMASK) | _PAGE_IO)
 
 #define PAGE_KERNEL_IO		__pgprot(_PAGE_IOREMAP)
 

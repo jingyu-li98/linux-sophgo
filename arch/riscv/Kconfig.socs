@@ -98,6 +98,12 @@ config SOC_SOPHGO_MANGO
 config  THEAD_PATCH_NONCOHERENCY_MEMORY_MODEL
 	bool "T-Head non-coherency memory mode"
 	select ERRATA_THEAD_PBMT
+	select ARCH_HAS_DMA_PREP_COHERENT
+	select ARCH_HAS_SYNC_DMA_FOR_CPU
+	select ARCH_HAS_SYNC_DMA_FOR_DEVICE
+	select ARCH_HAS_DMA_WRITE_COMBINE
+	select DMA_DIRECT_REMAP
+	select GENERIC_ALLOCATOR
 	help
 	  This enables support for T-Head non-coherency memory mode.
 

@@ -57,11 +57,3 @@ void arch_sync_dma_for_cpu(phys_addr_t paddr, size_t size,
 		pr_err("%s: dir[%d] illegal!\n", __func__, (int)dir);
 	}
 }
-
-pgprot_t arch_dma_mmap_pgprot(struct device *dev, pgprot_t prot,
-		unsigned long attrs)
-{
-	if (attrs & DMA_ATTR_WRITE_COMBINE)
-		return pgprot_writecombine(prot);
-	return pgprot_noncached(prot);
-}

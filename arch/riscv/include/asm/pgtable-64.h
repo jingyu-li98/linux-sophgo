@@ -127,19 +127,10 @@ static inline u64 riscv_page_io(void)
 #define _PAGE_MTMASK		riscv_page_mtmask()
 
 /* Set of bits to preserve across pte_modify() */
-#ifdef CONFIG_THEAD_PATCH_NONCOHERENCY_MEMORY_MODEL
-#define _PAGE_CHG_MASK  (~(unsigned long)(_PAGE_PRESENT | _PAGE_READ |	\
-					  _PAGE_WRITE | _PAGE_EXEC |	\
-					  _PAGE_USER | _PAGE_GLOBAL |	\
-					  _PAGE_SEC | _PAGE_SHARE |     \
-					  _PAGE_BUF | _PAGE_CACHE |     \
-					  _PAGE_SO))
-#else
 #define _PAGE_CHG_MASK  (~(unsigned long)(_PAGE_PRESENT | _PAGE_READ |	\
 					  _PAGE_WRITE | _PAGE_EXEC |	\
 					  _PAGE_USER | _PAGE_GLOBAL |	\
 					  _PAGE_MTMASK))
-#endif
 
 static inline int pud_present(pud_t pud)
 {
