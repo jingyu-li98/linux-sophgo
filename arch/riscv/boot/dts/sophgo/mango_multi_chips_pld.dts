@@ -2001,7 +2001,7 @@
 			reg = <0x00000070 0x40000000 0x00000000 0x00001000>;
 			interrupt-parent = <&intc>;
 			interrupts = <112>;
-			clock-frequency = <500000000>;
+			clock-frequency = <153600>;
 			clock-names = "baudclk";
 			reg-shift = <2>;
 			reg-io-width = <4>;
@@ -2045,7 +2045,7 @@
 		/* bootargs = "console=ttyS0,115200 crashkernel=256M-:128M manGo_mmu_v1"; */
 		/* linux,initrd-start = <0x2000000>; */
 		/* linux,initrd-end = <0x17000000>; */
-		bootargs = "console=ttyS0,115200 earlycon ignore_loglevel rdinit=/init root=/dev/ram0 rw \
+		bootargs = "console=ttyS0,9600 earlycon ignore_loglevel rdinit=/init root=/dev/ram0 rw \
 initrd=0x30000000,32M retain_initrd";
 		stdout-path = "serial0";
 	};
