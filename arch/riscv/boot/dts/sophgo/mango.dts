@@ -1,4 +1,9 @@
 /dts-v1/;
+#include <dt-bindings/clock/sophgo.h>
+#include <dt-bindings/clock/mango-clock.h>
+
+#include "mango_clock.dtsi"
+
 / {
 	model = "sophgo mango";
 	compatible = "sophgo, sg2040_mango_pld";
