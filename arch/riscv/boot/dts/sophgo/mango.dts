@@ -3,6 +3,7 @@
 #include <dt-bindings/clock/mango-clock.h>
 
 #include "mango_clock.dtsi"
+#include "mango_pinctrl.dtsi"
 
 / {
 	model = "sophgo mango";
