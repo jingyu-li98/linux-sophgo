@@ -1,4 +1,11 @@
 /dts-v1/;
+#include <dt-bindings/clock/sophgo.h>
+#include <dt-bindings/clock/mango-clock.h>
+#include <dt-bindings/reset/mango-resets.h>
+
+#include "mango_clock.dtsi"
+#include "mango_pinctrl.dtsi"
+
 / {
 	model = "sophgo mango";
 	compatible = "sophgo, sg2040_mango_pld";
@@ -934,25 +941,21 @@
 			riscv,ndev = <172>;
 		};
 
-		dummy_apb: apb-clock {
-			compatible = "fixed-clock";
-			clock-frequency = <250000000>;
-			clock-output-names = "dummy_apb";
-			#clock-cells = <0>;
+		top_misc: top_misc_ctrl@7030010000 {
+			compatible = "sophgo,top-misc", "syscon";
+			reg = <0x70 0x30010000 0x0 0x8000>;
+			clocks = <&div_clk GATE_CLK_AXI_DBG_I2C>,
+				 <&div_clk GATE_CLK_AXI_SRAM>,
+				 <&div_clk GATE_CLK_AHB_ROM>;
+			clock-names = "dbg_i2c_clk", "axi_sram_clk", "ahb_rom_clk";
 		};
 
-		dummy_ahb: ahb-clock {
-			compatible = "fixed-clock";
-			clock-frequency = <250000000>;
-			clock-output-names = "dummy_ahb";
-			#clock-cells = <0>;
-		};
-
-		dummy_axi: axi-clock {
-			compatible = "fixed-clock";
-			clock-frequency = <25000000>;
-			clock-output-names = "dummy_axi";
-			#clock-cells = <0>;
+		rst: reset-controller {
+			#reset-cells = <1>;
+			compatible = "bitmain,reset";
+			subctrl-syscon = <&top_misc>;
+			top_rst_offset = <0x3000>;
+			nr_resets = <RST_MAX_NUM>;
 		};
 
 		uart0: serial@7040000000 {
@@ -961,9 +964,29 @@
 			interrupt-parent = <&intc>;
 			interrupts = <112>;
 			clock-frequency = <153600>;
-			clock-names = "baudclk";
 			reg-shift = <2>;
 			reg-io-width = <4>;
+		};
+
+		sd: bm-sd@704002B000 {
+			compatible = "bitmain,bm-pldm-sdcard";
+			reg = <0x70 0x4002B000 0x0 0x1000>;
+			reg-names = "core_mem";
+			interrupt-parent = <&intc>;
+			interrupts = <136>;
+			bus-width = <4>;
+			no-sdio;
+			no-mmc;
+			resets = <&rst RST_SD>;
+			reset-names = "sdio";
+			clocks =
+				<&div_clk GATE_CLK_SD_100M>,
+				<&div_clk GATE_CLK_AXI_SD>,
+				<&div_clk GATE_CLK_100K_SD>;
+			clock-names =
+				"clk_gate_sd",
+				"clk_gate_axi_sd",
+				"clk_gate_100k_sd";
 		};
 	};
 
@@ -1005,7 +1028,7 @@
 		/* linux,initrd-start = <0x2000000>; */
 		/* linux,initrd-end = <0x17000000>; */
 		bootargs = "console=ttyS0,9600 earlycon ignore_loglevel rdinit=/init root=/dev/ram0 rw \
-initrd=0x30000000,32M retain_initrd";
+initrd=0x30000000,32M retain_initrd maxcpus=1";
 		stdout-path = "serial0";
 	};
 };

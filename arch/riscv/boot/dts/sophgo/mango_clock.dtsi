@@ -18,7 +18,7 @@
 			#clock-cells = <0>;
 			id = <MPLL_CLK>;
 			mode = <NORMAL_MODE>;
-			// subctrl-syscon = <&top_misc>;
+			subctrl-syscon = <&top_misc>;
 			clocks = <&cgi>;
 			clock-output-names = "mpll_clk";
 		};
@@ -28,7 +28,7 @@
 			#clock-cells = <0>;
 			id = <FPLL_CLK>;
 			mode = <NORMAL_MODE>;
-			// subctrl-syscon = <&top_misc>;
+			subctrl-syscon = <&top_misc>;
 			clocks = <&cgi>;
 			clock-output-names = "fpll_clk";
 		};
@@ -38,7 +38,7 @@
 			#clock-cells = <0>;
 			id = <DPLL0_CLK>;
 			mode = <NORMAL_MODE>;
-			// subctrl-syscon = <&top_misc>;
+			subctrl-syscon = <&top_misc>;
 			clocks = <&cgi>;
 			clock-output-names = "dpll0_clk";
 		};
@@ -47,7 +47,7 @@
 			compatible = "mango, dm-pll-clock";
 			#clock-cells = <0>;
 			mode = <NORMAL_MODE>;
-			// subctrl-syscon = <&top_misc>;
+			subctrl-syscon = <&top_misc>;
 			clocks = <&cgi>;
 			id = <DPLL1_CLK>;
 			clock-output-names = "dpll1_clk";
