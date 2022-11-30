@@ -15,10 +15,9 @@
 	memory@0 {
 		device_type = "memory";
 		/*
-		 * Total memory size: 1GB (0x300_0000_0000 - 0x300_4000_0000)
 		 * 2M offset is added, for kernel starts from there
 		 */
-		reg = <0x00000000 0x00200000 0x00000000 0x7fe00000>;
+		reg = <0x00000000 0x00200000 0x00000001 0xffe00000>;
 	};
 
 	cpus {
