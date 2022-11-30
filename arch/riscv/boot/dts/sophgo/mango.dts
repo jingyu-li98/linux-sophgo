@@ -1098,7 +1098,7 @@
 		};
 	};
 
-#if 0
+#if 1
 	pcie@7060000000 {
 		compatible = "sophgo,cdns-pcie-host";
 		device_type = "pci";
