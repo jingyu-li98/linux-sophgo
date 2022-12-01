@@ -24,6 +24,7 @@ static inline void activate_mm(struct mm_struct *prev,
 	switch_mm(prev, next, NULL);
 }
 
+#if 0
 #define deactivate_mm deactivate_mm
 static inline void deactivate_mm(struct task_struct *tsk,
 				struct mm_struct *mm)
@@ -31,6 +32,7 @@ static inline void deactivate_mm(struct task_struct *tsk,
 	if (mm != NULL)
 		flush_tlb_mm(mm);
 }
+#endif
 
 #define init_new_context init_new_context
 static inline int init_new_context(struct task_struct *tsk,
