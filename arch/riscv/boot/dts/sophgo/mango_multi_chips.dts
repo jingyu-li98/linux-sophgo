@@ -22,12 +22,12 @@
 
 	memory@0 {
 		device_type = "memory";
-		reg = <0x00000000 0x00200000 0x00000000 0x3fe00000>;
+		reg = <0x00000000 0x00200000 0x00000001 0xffe00000>;
 		numa-node-id = <0>;
 	};
 	memory@8000000000 {
 		device_type = "memory";
-		reg = <0x00000080 0x00000000 0x00000000 0x40000000>;
+		reg = <0x00000080 0x00000000 0x00000002 0x00000000>;
 		numa-node-id = <1>;
 	};
 
@@ -1999,6 +1999,30 @@
 			nr_resets = <RST_MAX_NUM>;
 		};
 
+		gpio0: gpio@7030009000 {
+			compatible = "snps,dw-apb-gpio";
+			reg = <0x70 0x30009000 0x0 0x400>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&div_clk GATE_CLK_APB_GPIO>,
+				 <&div_clk GATE_CLK_APB_GPIO_INTR>,
+				 <&div_clk GATE_CLK_GPIO_DB>;
+			clock-names = "base_clk", "intr_clk", "db_clk";
+
+			port0a: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "port0a";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <32>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupt-parent = <&intc>;
+				interrupts = <96>;
+			};
+		};
+
 		uart0: serial@7040000000 {
 			compatible = "snps,dw-apb-uart";
 			reg = <0x00000070 0x40000000 0x00000000 0x00001000>;
@@ -2010,6 +2034,28 @@
 			clock-names = "baudclk", "apb_pclk";
 			reg-shift = <2>;
 			reg-io-width = <4>;
+		};
+
+		emmc: bm-emmc@704002A000 {
+			compatible = "bitmain,bm-emmc";
+			reg = <0x70 0x4002A000 0x0 0x1000>;
+			reg-names = "core_mem";
+			interrupt-parent = <&intc>;
+			interrupts = <134>;
+			bus-width = <4>;
+			non-removable;
+			no-sdio;
+			no-sd;
+			resets = <&rst RST_EMMC>;
+			reset-names = "emmc";
+			clocks =
+				<&div_clk GATE_CLK_EMMC_100M>,
+				<&div_clk GATE_CLK_AXI_EMMC>,
+				<&div_clk GATE_CLK_100K_EMMC>;
+			clock-names =
+				"clk_gate_emmc",
+				"clk_gate_axi_emmc",
+				"clk_gate_100k_emmc";
 		};
 
 		sd: bm-sd@704002B000 {
@@ -2032,9 +2078,67 @@
 				"clk_gate_axi_sd",
 				"clk_gate_100k_sd";
 		};
+
+		stmmac_axi_setup: stmmac-axi-config {
+			snps,wr_osr_lmt = <1>;
+			snps,rd_osr_lmt = <2>;
+			snps,blen = <4 8 16 0 0 0 0>;
+		};
+
+		mtl_rx_setup: rx-queues-config {
+			snps,rx-queues-to-use = <8>;
+			queue0 {};
+			queue1 {};
+			queue2 {};
+			queue3 {};
+			queue4 {};
+			queue5 {};
+			queue6 {};
+			queue7 {};
+		};
+
+		mtl_tx_setup: tx-queues-config {
+			snps,tx-queues-to-use = <8>;
+			queue0 {};
+			queue1 {};
+			queue2 {};
+			queue3 {};
+			queue4 {};
+			queue5 {};
+			queue6 {};
+			queue7 {};
+		};
+
+		ethernet0: ethernet@7040026000 {
+			compatible = "bitmain,ethernet";
+			reg = <0x70 0x40026000 0x0 0x4000>;
+			interrupt-parent = <&intc>;
+			interrupts = <132>;
+			interrupt-names = "macirq";
+			clock-names = "clk_tx", "gate_clk_tx", "stmmaceth", "ptp_ref", "gate_clk_ref";
+			clocks = <&div_clk DIV_CLK_FPLL_TX_ETH0>,
+				   <&div_clk GATE_CLK_TX_ETH0>,
+				   <&div_clk GATE_CLK_AXI_ETH0>,
+				   <&div_clk GATE_CLK_PTP_REF_I_ETH0>,
+				   <&div_clk GATE_CLK_REF_ETH0>;
+
+			phy-reset-gpios = <&port0a 27 0>;
+			/* no hash filter and perfect filter support */
+			snps,multicast-filter-bins = <0>;
+			snps,perfect-filter-entries = <1>;
+
+			snps,txpbl = <32>;
+			snps,rxpbl = <32>;
+			snps,aal;
+
+			snps,axi-config = <&stmmac_axi_setup>;
+			snps,mtl-rx-config = <&mtl_rx_setup>;
+			snps,mtl-tx-config = <&mtl_tx_setup>;
+
+			phy-mode = "rgmii-id";
+		};
 	};
 
-#if 0
 	pcie@7060000000 {
 		compatible = "sophgo,cdns-pcie-host";
 		device_type = "pci";
@@ -2061,18 +2165,15 @@
 
 		status = "okay";
 	};
-#endif
 
 	aliases {
 		serial0 = &uart0;
 	};
 
 	chosen {
-		/* bootargs = "console=ttyS0,115200 crashkernel=256M-:128M manGo_mmu_v1"; */
-		/* linux,initrd-start = <0x2000000>; */
-		/* linux,initrd-end = <0x17000000>; */
-		bootargs = "console=ttyS0,115200 earlycon ignore_loglevel rdinit=/init root=/dev/ram0 rw \
-initrd=0x30000000,32M retain_initrd";
+		bootargs = "console=ttyS0,115200 earlycon ignore_loglevel \
+			    rdinit=/init root=/dev/ram0 rw \
+			    initrd=0x30000000,32M retain_initrd maxcpus=1";
 		stdout-path = "serial0";
 	};
 };
