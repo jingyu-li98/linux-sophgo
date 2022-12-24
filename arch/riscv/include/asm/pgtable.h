@@ -524,8 +524,6 @@ static inline void __set_pte_at(struct mm_struct *mm,
 	set_pte(ptep, pteval);
 #ifdef CONFIG_HIGHMEM
 	local_flush_tlb_page(addr);
-	if (mm != NULL)
-		flush_tlb_mm_page(mm, addr);
 #endif
 }
 
