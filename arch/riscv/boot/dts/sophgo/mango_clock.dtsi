@@ -64,7 +64,7 @@
 			#clock-cells = <1>;
 			id = <MUX_CLK_TABLE>;
 		};
-#if 1
+#if 0
 		clock_init: default_rates {
 			compatible = "mango, clk-default-rates";
 			#clock-cells = <1>;
