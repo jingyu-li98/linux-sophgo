@@ -153,7 +153,7 @@ int cdns_pcie_config_read(struct pci_bus *bus, unsigned int devfn,
 	unsigned int value, offset;
 	void __iomem *aligned_addr;
 
-	if (bus->number != 0)
+	if ((bus->number != 0) && (bus->number != 0x80))
 		return pci_generic_config_read(bus, devfn, where, size, val);
 
 	addr = (unsigned long)bus->ops->map_bus(bus, devfn, where);
@@ -188,7 +188,7 @@ int cdns_pcie_config_write(struct pci_bus *bus, unsigned int devfn,
 	unsigned int value, offset;
 	void __iomem *aligned_addr;
 
-	if (bus->number != 0)
+	if ((bus->number != 0) && (bus->number != 0x80))
 		return pci_generic_config_write(bus, devfn, where, size, val);
 
 	addr = (unsigned long)bus->ops->map_bus(bus, devfn, where);
@@ -339,22 +339,6 @@ static int cdns_pcie_host_init_address_translation(struct cdns_mango_pcie_rc *rc
 	return 0;
 }
 
-static int cdns_pcie_slv_location_mapping(struct cdns_mango_pcie_rc *rc)
-{
-	struct cdns_pcie *pcie = &rc->pcie;
-	u32 apb_base = 0;
-
-	apb_base =  CDNS_PCIE_CFG_MANGO_APB;
-
-	//pcie addr mapping
-	cdns_pcie_writel(pcie, (apb_base + CDNS_PCIE_IRS_REG0400), 0x00000000);
-	cdns_pcie_writel(pcie, (apb_base + CDNS_PCIE_IRS_REG0404), 0x40);
-	cdns_pcie_writel(pcie, (apb_base + CDNS_PCIE_IRS_REG0418), 0xffffffff);
-	cdns_pcie_writel(pcie, (apb_base + CDNS_PCIE_IRS_REG041C), 0x43);
-
-	return 0;
-}
-
 static int cdns_pcie_msi_init(struct cdns_mango_pcie_rc *rc)
 {
 	struct device *dev = rc->dev;
@@ -394,8 +378,6 @@ static int cdns_pcie_host_init(struct device *dev, struct cdns_mango_pcie_rc *rc
 	err = cdns_pcie_host_init_address_translation(rc);
 	if (err)
 		return err;
-
-	cdns_pcie_slv_location_mapping(rc);
 
 	rc->num_vectors = MSI_DEF_NUM_VECTORS;
 	rc->num_applied_vecs = 0;

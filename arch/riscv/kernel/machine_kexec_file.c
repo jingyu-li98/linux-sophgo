@@ -157,7 +157,7 @@ int load_other_segments(struct kimage *image,
 	kbuf.memsz = dtb_len;
 	kbuf.buf_align = PAGE_SIZE;
 	kbuf.buf_max = ULONG_MAX;
-	kbuf.top_down = true;
+	kbuf.top_down = false;
 
 	ret = kexec_add_buffer(&kbuf);
 	if (ret)

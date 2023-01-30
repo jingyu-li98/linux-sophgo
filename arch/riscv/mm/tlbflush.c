@@ -74,13 +74,6 @@ void flush_tlb_page(struct vm_area_struct *vma, unsigned long addr)
 	__sbi_tlb_flush_range(vma->vm_mm, addr, PAGE_SIZE, PAGE_SIZE);
 }
 
-#ifdef CONFIG_HIGHMEM
-void flush_tlb_mm_page(struct mm_struct *mm, unsigned long addr)
-{
-	__sbi_tlb_flush_range(mm, addr, PAGE_SIZE, PAGE_SIZE);
-}
-#endif
-
 void flush_tlb_range(struct vm_area_struct *vma, unsigned long start,
 		     unsigned long end)
 {

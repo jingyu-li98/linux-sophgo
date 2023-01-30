@@ -175,6 +175,7 @@ static unsigned int bm_sdhci_get_max_clock(struct sdhci_host *host)
 	return 50 * 1000 * 1000;
 }
 
+#if 0 // FIXME, SD card not working after this.
 static void bm_sdhci_hw_reset(struct sdhci_host *host)
 {
 	struct sdhci_pltfm_host *pltfm_host;
@@ -189,6 +190,7 @@ static void bm_sdhci_hw_reset(struct sdhci_host *host)
 	udelay(10);
 	reset_control_deassert(bm_host->reset);
 }
+#endif
 
 void bm_sdhci_reset(struct sdhci_host *host, u8 mask)
 {
