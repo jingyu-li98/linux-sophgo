@@ -7,8 +7,8 @@
 #include "mango_pinctrl.dtsi"
 
 / {
-	model = "sophgo mango";
-	compatible = "sophgo, sg2040_mango_pld";
+	model = "Sophgo Mango";
+	compatible = "sophgo,mango_pld";
 	#address-cells = <2>;
 	#size-cells = <2>;
 
