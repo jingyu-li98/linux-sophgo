@@ -1,4 +1,4 @@
-#include "mango.dts"
+#include "mango.dtsi"
 
 / {
 	info {
