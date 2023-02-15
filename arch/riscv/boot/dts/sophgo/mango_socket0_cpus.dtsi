@@ -58,7 +58,7 @@
 					cpu = <&cpu21>;
 				};
 				core2 {
-					cpu = <&cpu21>;
+					cpu = <&cpu22>;
 				};
 				core3 {
 					cpu = <&cpu23>;
