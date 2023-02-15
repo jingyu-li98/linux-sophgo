@@ -64,6 +64,8 @@ deploy_kernel_headers () {
 		find arch/*/include include scripts -type f -o -type l
 		find arch/$SRCARCH -name Kbuild.platforms -o -name Platform
 		find $(find arch/$SRCARCH -name include -o -name scripts -type d) -type f
+		find . -name System.map
+		find . -name certs/*.pem
 	) > debian/hdrsrcfiles
 
 	{
